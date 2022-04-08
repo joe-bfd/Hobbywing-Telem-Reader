@@ -16,7 +16,7 @@ void loop() {
         //Serial.println("Could not read data from motor 1");
     } else if (ret1 == 2) {
         Serial.println("CRC check failed on motor 1");
-    } else if (ret1 == 0) {
+    } //else if (ret1 == 0) {
         Serial.println("------------- Motor 1 ----------------");
         Serial.print("Input Throttle: \t");
         Serial.println(motor1.get_input_throttle(), DEC);
@@ -36,14 +36,14 @@ void loop() {
         Serial.println(motor1.get_cap_temp(), DEC);
         Serial.print("Error Bitmask:  \t");
         Serial.println(motor1.get_error_bits(), DEC);
-        delay(1000);
-    }
+        //delay(1000);
+    //}
     int ret2 = motor2.update_telem();
     if (ret2 == 1) {
         //Serial.println("Could not read data from motor 2");
     } else if (ret2 == 2) {
         Serial.println("CRC check failed on motor 2");
-    } else if (ret2 == 0) {
+    } //else if (ret2 == 0) {
         Serial.println("------------- Motor 2 ----------------");
         Serial.print("Input Throttle: \t");
         Serial.println(motor2.get_input_throttle(), DEC);
@@ -63,14 +63,14 @@ void loop() {
         Serial.println(motor2.get_cap_temp(), DEC);
         Serial.print("Error Bitmask:  \t");
         Serial.println(motor2.get_error_bits(), DEC);
-        delay(1000);
-    }
+        //delay(1000);
+    //}
     int ret3 = motor3.update_telem();
     if (ret3 == 1) {
         //Serial.println("Could not read data from motor 3");
     } else if (ret3 == 2) {
         Serial.println("CRC check failed on motor 3");
-    } else if (ret3 == 0) {
+    } //else if (ret3 == 0) {
         Serial.println("------------- Motor 3 ----------------");
         Serial.print("Input Throttle: \t");
         Serial.println(motor3.get_input_throttle(), DEC);
@@ -91,5 +91,5 @@ void loop() {
         Serial.print("Error Bitmask:  \t");
         Serial.println(motor3.get_error_bits(), DEC);
         delay(1000);
-    }
+    //}
 }
