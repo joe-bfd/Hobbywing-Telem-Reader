@@ -47,7 +47,10 @@ uint32_t HwMotor::get_error_bits() {
 uint8_t HwMotor::read_telem() {
     uint8_t nextByte;
     int c = 0;
-    while (ser->read() != -1 && c++ < 1000) {
+    while (ser->read() != -1 && c++ < 10000) {
+    }
+    if (c >= 1000) {
+        return 1;
     }
     c = 0;
     do {
@@ -55,16 +58,20 @@ uint8_t HwMotor::read_telem() {
             nextByte = ser->read();
             //delay(1000);
         }
-    } while (nextByte != 0x9b && c++ < 1000);
+    } while (nextByte != 0x9b && c++ < 10000);
     if (c >= 1000) {
         return 1;
     }
     telem[0] = nextByte;
+    c = 0;
     for (int i = 1; i < 24; i++) {
-        while(ser->available() < 1) {
+        while(ser->available() < 1 && c++ < 10000) {
         }
         telem[i] = ser->read();
         //Serial.println(telem[i], HEX);
+    }
+    if (c >= 1000) {
+        return 1;
     }
     //delay(3000);
     return 0;
