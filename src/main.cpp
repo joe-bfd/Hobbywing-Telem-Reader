@@ -1,95 +1,147 @@
 #include <Arduino.h>
-#include "HwMotor/HwMotor.h"
-#include <string.h>
+#include <Servo.h>
+#include <NoDelay.h>
+#include "HwMotor/HwMotorIn.h"
 
-HwMotor motor1(&Serial1);
-HwMotor motor2(&Serial2);
-HwMotor motor3(&Serial3);
+//Pin Assignments
+//int vPin = A0;
+//int iPin = A1;
+int pwmPin = 3;
+int ssrPin = 7;
+HwMotorIn motor1(&Serial1);
+HwMotorIn motor2(&Serial2);
+HwMotorIn motor3(&Serial3);
 
-void setup() {
-    Serial.begin(57600);
+
+//vars we care about
+int pwmval = 1000;
+//float volts = 0;
+//float amps = 0;
+//float armedThreshold = 0.95;
+unsigned int testno = 0; //what test are we on
+unsigned int successful[3] = {0}; //how many successful tests have we done
+unsigned int failures[3] = {0}; //have we had any failures?
+
+//state machine
+int state = 0;
+
+void record() { //print to serial studio
+  Serial.print("/*");
+  Serial.print(state);
+  Serial.print(',');
+  Serial.print(testno);
+  Serial.print(',');
+  Serial.print(successful[0]);
+  Serial.print(',');
+  Serial.print(failures[0]);
+  Serial.print(',');
+  Serial.print(successful[1]);
+  Serial.print(',');
+  Serial.print(failures[1]);
+  Serial.print(',');
+  Serial.print(successful[2]);
+  Serial.print(',');
+  Serial.print(failures[2]);
+  Serial.println("*/");
 }
 
+Servo esc;
+
+
+
+noDelay write(100,record);
+
+void spindown() {
+  state = 4;
+}
+
+noDelay stopDelay(3000, spindown);
+
+void checkspin() {
+  testno++;
+  if(motor1.get_rpm() >= 0) {
+    successful[0]++;
+  }else {
+    failures[0]++;
+  }
+  if(motor2.get_rpm() >= 0) {
+    successful[1]++;
+  }else {
+    failures[1]++;
+  }  
+  if(motor3.get_rpm() >= 0) {
+    successful[2]++;
+  }else {
+    failures[2]++;
+  }
+  state = 3;
+  stopDelay.start();
+  return;
+}
+noDelay runDelay(5000,checkspin);
+
+void prearm2arm() {
+  pwmval = 1500;
+  digitalWrite(ssrPin, HIGH);
+  state = 2;
+  runDelay.start();
+  return;
+}
+
+noDelay prearmDelay(5000,prearm2arm);
+
+void setup() {
+  pinMode(ssrPin,OUTPUT);
+  pinMode(pwmPin,OUTPUT);
+  digitalWrite(ssrPin, LOW); // ensure SSR is off before beginning
+  Serial.begin(9600);
+  esc.attach(pwmPin);
+  esc.writeMicroseconds(pwmval);
+}
+
+void off2prearm() {
+  pwmval = 1000;
+  digitalWrite(ssrPin, HIGH);
+  state = 1;
+  prearmDelay.start();
+  return;
+}
+noDelay offDelay(5000,off2prearm);
+
+
+
 void loop() {
-    int ret1 = motor1.update_telem();
-    if (ret1 == 1) {
-        //Serial.println("Could not read data from motor 1");
-    } else if (ret1 == 2) {
-        Serial.println("CRC check failed on motor 1");
-    } //else if (ret1 == 0) {
-        Serial.println("------------- Motor 1 ----------------");
-        Serial.print("Input Throttle: \t");
-        Serial.println(motor1.get_input_throttle(), DEC);
-        Serial.print("Output Throttle:\t");
-        Serial.println(motor1.get_output_throttle(), DEC);
-        Serial.print("RPM:            \t");
-        Serial.println(motor1.get_rpm(), DEC);
-        Serial.print("Input Voltage:  \t");
-        Serial.println(motor1.get_input_voltage(), DEC);
-        Serial.print("Input Current:  \t");
-        Serial.println(motor1.get_input_current(), DEC);
-        Serial.print("Phase Current:  \t");
-        Serial.println(motor1.get_phase_current(), DEC);
-        Serial.print("MOS Temperature:\t");
-        Serial.println(motor1.get_mos_temp(), DEC);
-        Serial.print("Cap Temperature:\t");
-        Serial.println(motor1.get_cap_temp(), DEC);
-        Serial.print("Error Bitmask:  \t");
-        Serial.println(motor1.get_error_bits(), DEC);
-        //delay(1000);
-    //}
-    int ret2 = motor2.update_telem();
-    if (ret2 == 1) {
-        //Serial.println("Could not read data from motor 2");
-    } else if (ret2 == 2) {
-        Serial.println("CRC check failed on motor 2");
-    } //else if (ret2 == 0) {
-        Serial.println("------------- Motor 2 ----------------");
-        Serial.print("Input Throttle: \t");
-        Serial.println(motor2.get_input_throttle(), DEC);
-        Serial.print("Output Throttle:\t");
-        Serial.println(motor2.get_output_throttle(), DEC);
-        Serial.print("RPM:            \t");
-        Serial.println(motor2.get_rpm(), DEC);
-        Serial.print("Input Voltage:  \t");
-        Serial.println(motor2.get_input_voltage(), DEC);
-        Serial.print("Input Current:  \t");
-        Serial.println(motor2.get_input_current(), DEC);
-        Serial.print("Phase Current:  \t");
-        Serial.println(motor2.get_phase_current(), DEC);
-        Serial.print("MOS Temperature:\t");
-        Serial.println(motor2.get_mos_temp(), DEC);
-        Serial.print("Cap Temperature:\t");
-        Serial.println(motor2.get_cap_temp(), DEC);
-        Serial.print("Error Bitmask:  \t");
-        Serial.println(motor2.get_error_bits(), DEC);
-        //delay(1000);
-    //}
-    int ret3 = motor3.update_telem();
-    if (ret3 == 1) {
-        //Serial.println("Could not read data from motor 3");
-    } else if (ret3 == 2) {
-        Serial.println("CRC check failed on motor 3");
-    } //else if (ret3 == 0) {
-        Serial.println("------------- Motor 3 ----------------");
-        Serial.print("Input Throttle: \t");
-        Serial.println(motor3.get_input_throttle(), DEC);
-        Serial.print("Output Throttle:\t");
-        Serial.println(motor3.get_output_throttle(), DEC);
-        Serial.print("RPM:            \t");
-        Serial.println(motor3.get_rpm(), DEC);
-        Serial.print("Input Voltage:  \t");
-        Serial.println(motor3.get_input_voltage(), DEC);
-        Serial.print("Input Current:  \t");
-        Serial.println(motor3.get_input_current(), DEC);
-        Serial.print("Phase Current:  \t");
-        Serial.println(motor3.get_phase_current(), DEC);
-        Serial.print("MOS Temperature:\t");
-        Serial.println(motor3.get_mos_temp(), DEC);
-        Serial.print("Cap Temperature:\t");
-        Serial.println(motor3.get_cap_temp(), DEC);
-        Serial.print("Error Bitmask:  \t");
-        Serial.println(motor3.get_error_bits(), DEC);
-        delay(1000);
-    //}
+  esc.writeMicroseconds(pwmval);
+  motor1.update_telem();
+  motor2.update_telem();
+  motor3.update_telem();
+  write.update();
+
+
+  if (state == 0) {
+    offDelay.update();
+  }
+
+  if (state == 1) {
+    prearmDelay.update();
+  }
+
+  if (state == 2) {
+    runDelay.update();
+  }
+  
+  if (state == 3) {
+    pwmval = 1100;
+    //digitalWrite(ssrPin, LOW);
+    //state = 0;
+    //offDelay.start();
+    stopDelay.update();
+  }
+
+  if (state == 4) {
+    pwmval = 900;
+    digitalWrite(ssrPin, LOW);
+    state = 0;
+    offDelay.start();
+  }
 }

@@ -1,8 +1,8 @@
-#ifndef HWMOTOR_H
-#define HWMOTOR_H
+#ifndef HWMOTORIN_H
+#define HWMOTORIN_H
 #include <Arduino.h>
 
-class HwMotor {
+class HwMotorIn {
     private:
         HardwareSerial *ser;
         uint8_t telem[24];
@@ -23,7 +23,7 @@ class HwMotor {
         void initialize_temp_table();
         uint32_t get_temp(uint8_t raw_temp);
     public:
-        HwMotor(HardwareSerial *ser);
+        HwMotorIn(HardwareSerial *ser);
         uint8_t update_telem();
         float get_input_throttle();
         float get_output_throttle();

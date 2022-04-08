@@ -1,13 +1,15 @@
-#include "HwMotor.h"
+#include "HwMotorIn.h"
 #include <CRC.h>
 
-HwMotor::HwMotor(HardwareSerial *ser) {
+#define READ_TRIES 100000
+
+HwMotorIn::HwMotorIn(HardwareSerial *ser) {
     this->ser = ser;
     ser->begin(19200);
     initialize_temp_table();
 }
 
-uint8_t HwMotor::update_telem() {
+uint8_t HwMotorIn::update_telem() {
     if (read_telem()) {
         return 1;
     }
@@ -17,39 +19,39 @@ uint8_t HwMotor::update_telem() {
     parse_telem();
     return 0;
 }
-float HwMotor::get_input_throttle() {
+float HwMotorIn::get_input_throttle() {
     return input_throttle;
 }
-float HwMotor::get_output_throttle() {
+float HwMotorIn::get_output_throttle() {
     return output_throttle;
 }
-uint32_t HwMotor::get_rpm() {
+uint32_t HwMotorIn::get_rpm() {
     return rpm;
 }
-float HwMotor::get_input_voltage() {
+float HwMotorIn::get_input_voltage() {
     return input_voltage;
 }
-float HwMotor::get_input_current() {
+float HwMotorIn::get_input_current() {
     return input_current;
 }
-float HwMotor::get_phase_current() {
+float HwMotorIn::get_phase_current() {
     return phase_current;
 }
-uint32_t HwMotor::get_mos_temp() {
+uint32_t HwMotorIn::get_mos_temp() {
     return mos_temp;
 }
-uint32_t HwMotor::get_cap_temp() {
+uint32_t HwMotorIn::get_cap_temp() {
     return cap_temp;
 }
-uint32_t HwMotor::get_error_bits() {
+uint32_t HwMotorIn::get_error_bits() {
     return error_bits;
 }
-uint8_t HwMotor::read_telem() {
+uint8_t HwMotorIn::read_telem() {
     uint8_t nextByte;
     int c = 0;
-    while (ser->read() != -1 && c++ < 10000) {
+    while (ser->read() != -1 && c++ < READ_TRIES) {
     }
-    if (c >= 1000) {
+    if (c >= READ_TRIES) {
         return 1;
     }
     c = 0;
@@ -58,25 +60,25 @@ uint8_t HwMotor::read_telem() {
             nextByte = ser->read();
             //delay(1000);
         }
-    } while (nextByte != 0x9b && c++ < 10000);
+    } while (nextByte != 0x9b && c++ < READ_TRIES);
     if (c >= 1000) {
         return 1;
     }
     telem[0] = nextByte;
     for (int i = 1; i < 24; i++) {
         c = 0;
-        while(ser->available() < 1 && c++ < 10000) {
+        while(ser->available() < 1 && c++ < READ_TRIES) {
         }
         telem[i] = ser->read();
         //Serial.println(telem[i], HEX);
     }
-    if (c >= 1000) {
+    if (c >= READ_TRIES) {
         return 1;
     }
     //delay(3000);
     return 0;
 }
-uint8_t HwMotor::verify_telem() {
+uint8_t HwMotorIn::verify_telem() {
     uint16_t crc_calc;
     uint16_t crc_given;
 
@@ -87,7 +89,7 @@ uint8_t HwMotor::verify_telem() {
     }
     return 0;
 }
-void HwMotor::parse_telem() {
+void HwMotorIn::parse_telem() {
     uint16_t input_throttle_raw     = telem[6]  <<8 | telem[7];
     uint16_t output_throttle_raw     = telem[8]  <<8 | telem[9];
     uint16_t rpm_raw                = telem[10] <<8 | telem[11];
@@ -108,10 +110,10 @@ void HwMotor::parse_telem() {
     cap_temp = get_temp(cap_temp_raw);
     error_bits = error_bits_raw;
 }
-uint32_t HwMotor::get_temp(uint8_t raw_temp) {
+uint32_t HwMotorIn::get_temp(uint8_t raw_temp) {
     return tempTable[raw_temp-33];
 }
-void HwMotor::initialize_temp_table() {
+void HwMotorIn::initialize_temp_table() {
     tempTable[0]   = 129;
     tempTable[1]   = 128;
     tempTable[2]   = 127;
