@@ -63,8 +63,8 @@ uint8_t HwMotor::read_telem() {
         return 1;
     }
     telem[0] = nextByte;
-    c = 0;
     for (int i = 1; i < 24; i++) {
+        c = 0;
         while(ser->available() < 1 && c++ < 10000) {
         }
         telem[i] = ser->read();
